@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Search, LogOut, Menu, User, Settings as SettingsIcon, Wifi, WifiOff, Siren } from 'lucide-react';
+import { Bell, LogOut, Menu, User, Settings as SettingsIcon, Wifi, WifiOff, Siren } from 'lucide-react';
 import { useAuthStore } from '@/lib/stores/auth-store';
 import { authApi } from '@/lib/api/auth';
 import { useRouter } from 'next/navigation';
@@ -184,9 +184,8 @@ export default function Header({ onMenuClick }: HeaderProps) {
 
       {/* Main Header */}
       <div className="h-16 flex items-center justify-between px-4 lg:px-6">
-        {/* Left Section - Mobile Menu + Search */}
+        {/* Left Section - Mobile Menu */}
         <div className="flex items-center flex-1 space-x-4">
-          {/* Mobile Menu Button */}
           <button
             onClick={onMenuClick}
             className="lg:hidden p-2 rounded-lg transition-colors"
@@ -202,52 +201,10 @@ export default function Header({ onMenuClick }: HeaderProps) {
           >
             <Menu className="w-6 h-6" />
           </button>
-
-          {/* Search */}
-          <div className="flex-1 max-w-xl hidden sm:block">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5" style={{ color: 'var(--muted-foreground)' }} />
-              <input
-                type="text"
-                placeholder="Search products, showrooms, orders..."
-                className="w-full pl-10 pr-4 py-2 rounded-lg focus:outline-none text-sm"
-                style={{ 
-                  border: '1px solid var(--input)',
-                  backgroundColor: 'var(--background)',
-                  color: 'var(--foreground)'
-                }}
-                onFocus={(e) => {
-                  e.currentTarget.style.outline = `2px solid ${pageColor}`;
-                  e.currentTarget.style.outlineOffset = '2px';
-                  e.currentTarget.style.borderColor = pageColor;
-                }}
-                onBlur={(e) => {
-                  e.currentTarget.style.outline = 'none';
-                  e.currentTarget.style.borderColor = 'var(--input)';
-                }}
-              />
-            </div>
-          </div>
         </div>
 
         {/* Right Section */}
         <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Search Icon for Mobile */}
-          <button 
-            className="sm:hidden p-2 rounded-lg transition-colors"
-            style={{ color: 'var(--muted-foreground)' }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.color = 'var(--foreground)';
-              e.currentTarget.style.backgroundColor = 'var(--muted)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.color = 'var(--muted-foreground)';
-              e.currentTarget.style.backgroundColor = 'transparent';
-            }}
-          >
-            <Search className="w-5 h-5" />
-          </button>
-
           {/* Theme Toggle */}
           <ThemeToggle />
 

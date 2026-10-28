@@ -227,7 +227,6 @@ function AddLabelPrintingPageContent() {
     productId: '',
     manufactureDate: todayISO(),
     batchNo: '',
-    priceOverride: '',
     labelCount: '1',
   });
 
@@ -274,6 +273,12 @@ function AddLabelPrintingPageContent() {
     [products, formData.productId],
   );
 
+  const catalogUnitPrice = useMemo(() => {
+    if (!selectedProduct) return null;
+    const n = Number(selectedProduct.unitPrice);
+    return Number.isFinite(n) ? n : null;
+  }, [selectedProduct]);
+
   const hasAllowFutureLabelPrint = selectedProduct?.allowFutureLabelPrint || false;
 
   const expiryDaysFromProduct = useMemo(() => {
@@ -316,6 +321,10 @@ function AddLabelPrintingPageContent() {
       toast.error('Select a product using the search field.');
       return;
     }
+    if (catalogUnitPrice == null) {
+      toast.error('Product price is required. Choose a product with a valid catalog price.');
+      return;
+    }
 
     try {
       setIsSubmitting(true);
@@ -325,7 +334,7 @@ function AddLabelPrintingPageContent() {
         labelCount: Number(formData.labelCount) || 1,
         startDate: formData.manufactureDate,
         expiryDays: expiryDaysFromProduct,
-        priceOverride: formData.priceOverride.trim() ? Number(formData.priceOverride) : undefined,
+        priceOverride: catalogUnitPrice,
       });
       toast.success('Label print request created successfully');
       router.push('/operation/label-printing');
@@ -369,6 +378,18 @@ function AddLabelPrintingPageContent() {
         <CardContent className="p-3 sm:p-4">
           <form onSubmit={handleSubmit} className="space-y-2">
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-x-3 md:gap-y-2">
+              <div className="md:col-span-2">
+                <label className="mb-0.5 block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                  Product <span className="text-red-500">*</span>
+                </label>
+                <ProductSearchField
+                  products={products}
+                  value={formData.productId}
+                  onChange={(productId) => setFormData((prev) => ({ ...prev, productId }))}
+                  accent={accent}
+                />
+              </div>
+
               <Input
                 compact
                 label="Manufacture Date"
@@ -399,10 +420,12 @@ function AddLabelPrintingPageContent() {
                 type="number"
                 min="0"
                 step="0.01"
-                value={formData.priceOverride}
-                onChange={(e) => setFormData({ ...formData, priceOverride: e.target.value })}
-                placeholder="Optional"
+                value={catalogUnitPrice != null ? String(catalogUnitPrice) : ''}
+                placeholder="Select a product"
                 fullWidth
+                required
+                disabled
+                helperText="From product catalog (effective price for manufacture date)"
               />
               <Input
                 compact
@@ -469,17 +492,6 @@ function AddLabelPrintingPageContent() {
                 {readOnlyPanel(calculatedExpiryText)}
               </div>
 
-              <div className="md:col-span-2">
-                <label className="mb-0.5 block text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                  Product <span className="text-red-500">*</span>
-                </label>
-                <ProductSearchField
-                  products={products}
-                  value={formData.productId}
-                  onChange={(productId) => setFormData((prev) => ({ ...prev, productId }))}
-                  accent={accent}
-                />
-              </div>
             </div>
 
             <div className="flex justify-end gap-2 border-t pt-2.5" style={{ borderColor: 'var(--border)' }}>
