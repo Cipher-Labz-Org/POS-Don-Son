@@ -24,7 +24,6 @@ $permissionMap = @{
     "operation/cancellation/page.tsx" = "operation.cancellation.view"
     "operation/delivery-return/page.tsx" = "operation.delivery-return.view"
     "operation/label-printing/page.tsx" = "operation.label-printing.view"
-    "operation/showroom-open-stock/page.tsx" = "operation.showroom-open-stock.view"
     "operation/showroom-label-printing/page.tsx" = "operation.showroom-label-printing.view"
     
     # Production

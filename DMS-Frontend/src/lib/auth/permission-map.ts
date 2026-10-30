@@ -391,15 +391,6 @@ export const PERMISSION_SECTIONS: SectionDef[] = [
         }),
       },
       {
-        id: 'operation-showroom-open-stock',
-        name: 'Showroom Open Stock',
-        href: '/operation/showroom-open-stock',
-        icon: Box,
-        actions: fillCoreActions('operation:showroom-open-stock', {
-          edit: 'operation:showroom-open-stock:update',
-        }),
-      },
-      {
         id: 'operation-showroom-label-printing',
         name: 'Showroom Label Printing',
         href: '/operation/showroom-label-printing',

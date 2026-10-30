@@ -88,8 +88,8 @@ public class ShowroomLabelRequestService : IShowroomLabelRequestService
         {
             Id = Guid.NewGuid(),
             OutletId = dto.OutletId,
-            Text1 = dto.Text1,
-            Text2 = dto.Text2,
+            Text1 = outlet.Code.Trim(),
+            Text2 = null,
             LabelCount = dto.LabelCount,
             RequestDate = DateTime.UtcNow,
             Status = "Pending",
@@ -130,10 +130,9 @@ public class ShowroomLabelRequestService : IShowroomLabelRequestService
         if (outlet == null)
             throw new InvalidOperationException("Outlet not found or is inactive");
 
-        // Update fields
         request.OutletId = dto.OutletId;
-        request.Text1 = dto.Text1;
-        request.Text2 = dto.Text2;
+        request.Text1 = outlet.Code.Trim();
+        request.Text2 = null;
         request.LabelCount = dto.LabelCount;
         request.UpdatedById = userId;
         request.UpdatedAt = DateTime.UtcNow;

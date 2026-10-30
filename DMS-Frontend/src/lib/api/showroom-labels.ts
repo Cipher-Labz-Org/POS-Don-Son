@@ -25,15 +25,11 @@ export interface ShowroomLabelRequest {
 
 export interface CreateShowroomLabelRequestDto {
   outletId: string;
-  text1: string;
-  text2?: string;
   labelCount: number;
 }
 
 export interface UpdateShowroomLabelRequestDto {
   outletId: string;
-  text1: string;
-  text2?: string;
   labelCount: number;
 }
 

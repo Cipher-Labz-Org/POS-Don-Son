@@ -97,7 +97,6 @@ export default function AdvancedPermissionsSelector({
         'Operation-cancellation': 'Operation',
         'Operation-delivery-return': 'Operation',
         'Operation-label-printing': 'Operation',
-        'Operation-showroom-open-stock': 'Operation',
         'Operation-showroom-label-printing': 'Operation',
         'Operation-pos-sales': 'Administrator',
       };

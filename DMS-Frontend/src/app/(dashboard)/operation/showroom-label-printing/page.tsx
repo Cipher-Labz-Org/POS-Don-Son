@@ -17,6 +17,11 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { ProtectedPage } from '@/components/auth';
 import toast from 'react-hot-toast';
 import { formatSlDate } from '@/lib/sri-lanka-time';
+import {
+  printShowroomLabels,
+  SHOWROOM_LABEL_HEIGHT_MM,
+  SHOWROOM_LABEL_WIDTH_MM,
+} from '@/lib/print-showroom-label';
 
 export default function ShowroomLabelPrintingPage() {
   return (
@@ -48,8 +53,6 @@ function ShowroomLabelPrintingPageContent() {
 
   const [formData, setFormData] = useState({
     showroomCode: '',
-    text1: '',
-    text2: '',
     labelCount: '',
   });
 
@@ -87,29 +90,15 @@ function ShowroomLabelPrintingPageContent() {
     return requests.filter(req => {
       const matchesSearch =
         req.displayNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.text1.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (req.text2 || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        req.outletCode.toLowerCase().includes(searchTerm.toLowerCase());
+        req.outletCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        req.outletName.toLowerCase().includes(searchTerm.toLowerCase());
       return matchesSearch;
     });
   }, [requests, searchTerm]);
 
-  const handleShowroomChange = (showroomCode: string) => {
-    const selectedOutlet = outlets.find(o => o.code === showroomCode);
-    setFormData({
-      ...formData,
-      showroomCode,
-      text1: showroomCode,
-    });
-  };
-
   const handleSubmitForm = async () => {
     if (!formData.showroomCode) {
       toast.error('Please select a showroom');
-      return;
-    }
-    if (!formData.text1) {
-      toast.error('Text 1 is required');
       return;
     }
     if (!formData.labelCount || Number(formData.labelCount) < 1) {
@@ -127,18 +116,11 @@ function ShowroomLabelPrintingPageContent() {
       setIsSubmitting(true);
       const payload: CreateShowroomLabelRequestDto = {
         outletId: selectedOutlet.id,
-        text1: formData.text1,
-        text2: formData.text2 || undefined,
         labelCount: Number(formData.labelCount),
       };
       await showroomLabelsApi.create(payload);
       toast.success(`Showroom label request created for ${formData.labelCount} label(s)`);
-      setFormData({
-        showroomCode: '',
-        text1: '',
-        text2: '',
-        labelCount: '',
-      });
+      setFormData({ showroomCode: '', labelCount: '' });
       setShowForm(false);
       fetchRequests();
     } catch (error: any) {
@@ -152,8 +134,6 @@ function ShowroomLabelPrintingPageContent() {
     setEditingRequest(request);
     setFormData({
       showroomCode: request.outletCode,
-      text1: request.text1,
-      text2: request.text2 || '',
       labelCount: request.labelCount.toString(),
     });
     setShowForm(true);
@@ -168,10 +148,6 @@ function ShowroomLabelPrintingPageContent() {
     
     if (!formData.showroomCode) {
       toast.error('Please select a showroom');
-      return;
-    }
-    if (!formData.text1) {
-      toast.error('Text 1 is required');
       return;
     }
     if (!formData.labelCount || Number(formData.labelCount) < 1) {
@@ -189,18 +165,11 @@ function ShowroomLabelPrintingPageContent() {
       setIsSubmitting(true);
       const payload: UpdateShowroomLabelRequestDto = {
         outletId: selectedOutlet.id,
-        text1: formData.text1,
-        text2: formData.text2 || undefined,
         labelCount: Number(formData.labelCount),
       };
       await showroomLabelsApi.update(editingRequest.id, payload);
       toast.success('Showroom label request updated successfully');
-      setFormData({
-        showroomCode: '',
-        text1: '',
-        text2: '',
-        labelCount: '',
-      });
+      setFormData({ showroomCode: '', labelCount: '' });
       setShowForm(false);
       setEditingRequest(null);
       fetchRequests();
@@ -267,17 +236,10 @@ function ShowroomLabelPrintingPageContent() {
       render: (item: ShowroomLabelRequest) => getStatusBadge(item.status),
     },
     {
-      key: 'text1',
-      label: 'Text 1',
+      key: 'outletCode',
+      label: 'Showroom',
       render: (item: ShowroomLabelRequest) => (
-        <span className="font-medium">{item.text1}</span>
-      ),
-    },
-    {
-      key: 'text2',
-      label: 'Text 2',
-      render: (item: ShowroomLabelRequest) => (
-        <span className="text-sm">{item.text2 || '-'}</span>
+        <span className="font-mono font-semibold">{item.outletCode}</span>
       ),
     },
     {
@@ -352,7 +314,13 @@ function ShowroomLabelPrintingPageContent() {
           )}
           {item.status === 'Approved' && canPrint && (
             <button
-              onClick={() => toast.info('Print functionality coming soon')}
+              onClick={async () => {
+                try {
+                  await printShowroomLabels(item.outletCode, item.labelCount);
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : 'Print failed');
+                }
+              }}
               className="p-1.5 rounded transition-colors"
               style={{ color: '#C8102E' }}
               onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#FFF1F2'}
@@ -382,12 +350,7 @@ function ShowroomLabelPrintingPageContent() {
           {canCreate && !showForm && (
             <Button variant="primary" size="md" onClick={() => {
               setEditingRequest(null);
-              setFormData({
-                showroomCode: '',
-                text1: '',
-                text2: '',
-                labelCount: '',
-              });
+              setFormData({ showroomCode: '', labelCount: '' });
               setShowForm(true);
               setTimeout(() => {
                 document.getElementById('label-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -414,10 +377,10 @@ function ShowroomLabelPrintingPageContent() {
                 <Select
                   label="Showroom Code"
                   value={formData.showroomCode}
-                  onChange={(e) => handleShowroomChange(e.target.value)}
-                  options={outlets.map((o) => ({ 
-                    value: o.code, 
-                    label: o.code
+                  onChange={(e) => setFormData({ ...formData, showroomCode: e.target.value })}
+                  options={outlets.map((o) => ({
+                    value: o.code,
+                    label: `${o.code} — ${o.name}`,
                   }))}
                   placeholder="Select showroom code"
                   fullWidth
@@ -436,42 +399,24 @@ function ShowroomLabelPrintingPageContent() {
                 />
               </div>
 
-              <Input
-                label="Text 1"
-                type="text"
-                value={formData.text1}
-                onChange={(e) => setFormData({ ...formData, text1: e.target.value })}
-                placeholder="Enter text 1"
-                fullWidth
-                required
-              />
-
-              <Input
-                label="Text 2"
-                type="text"
-                value={formData.text2}
-                onChange={(e) => setFormData({ ...formData, text2: e.target.value })}
-                placeholder="Enter text 2 (optional)"
-                fullWidth
-              />
-
-              {formData.text1 && (
+              {formData.showroomCode ? (
                 <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--muted)', border: '1px solid var(--border)' }}>
                   <p className="text-sm font-medium mb-2" style={{ color: 'var(--muted-foreground)' }}>
-                    Label Preview
+                    Label preview ({SHOWROOM_LABEL_WIDTH_MM}mm × {SHOWROOM_LABEL_HEIGHT_MM}mm, centered)
                   </p>
-                  <div className="p-4 bg-white rounded border-2 border-dashed border-gray-300 text-center">
-                    <p className="text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
-                      {formData.text1}
-                    </p>
-                    {formData.text2 && (
-                      <p className="text-lg font-medium mt-1" style={{ color: 'var(--muted-foreground)' }}>
-                        {formData.text2}
-                      </p>
-                    )}
+                  <div
+                    className="mx-auto flex items-center justify-center rounded border-2 border-dashed border-gray-300 bg-white px-1 text-center font-bold leading-tight"
+                    style={{
+                      width: `${SHOWROOM_LABEL_WIDTH_MM}mm`,
+                      height: `${SHOWROOM_LABEL_HEIGHT_MM}mm`,
+                      fontSize: '9pt',
+                      color: 'var(--foreground)',
+                    }}
+                  >
+                    {formData.showroomCode}
                   </div>
                 </div>
-              )}
+              ) : null}
 
               <div className="flex justify-end space-x-3 pt-4">
                 <Button
@@ -479,12 +424,7 @@ function ShowroomLabelPrintingPageContent() {
                   onClick={() => {
                     setShowForm(false);
                     setEditingRequest(null);
-                    setFormData({
-                      showroomCode: '',
-                      text1: '',
-                      text2: '',
-                      labelCount: '',
-                    });
+                    setFormData({ showroomCode: '', labelCount: '' });
                   }}
                   disabled={isSubmitting}
                 >
@@ -493,7 +433,7 @@ function ShowroomLabelPrintingPageContent() {
                 <Button
                   variant="primary"
                   onClick={editingRequest ? handleUpdateForm : handleSubmitForm}
-                  disabled={isSubmitting || !formData.showroomCode || !formData.text1 || !formData.labelCount}
+                  disabled={isSubmitting || !formData.showroomCode || !formData.labelCount}
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -583,15 +523,11 @@ function ShowroomLabelPrintingPageContent() {
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Text 1</p>
-                      <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{req.text1}</p>
+                      <p className="text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Label text</p>
+                      <p className="text-sm font-semibold font-mono" style={{ color: 'var(--foreground)' }}>
+                        {req.outletCode}
+                      </p>
                     </div>
-                    {req.text2 && (
-                      <div>
-                        <p className="text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Text 2</p>
-                        <p className="text-sm" style={{ color: 'var(--foreground)' }}>{req.text2}</p>
-                      </div>
-                    )}
                     <div>
                       <p className="text-xs font-medium mb-1" style={{ color: 'var(--muted-foreground)' }}>Label Count</p>
                       <p className="text-sm font-semibold" style={{ color: 'var(--foreground)' }}>{req.labelCount}</p>

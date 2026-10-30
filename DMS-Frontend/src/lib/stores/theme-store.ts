@@ -48,7 +48,6 @@ export const DEFAULT_PAGE_COLORS: PageColorEntry[] = [
   { path: '/operation/cancellation', label: 'Cancellation', section: 'Operation', color: DEFAULT_BRAND_COLOR },
   { path: '/operation/delivery-return', label: 'Delivery Return', section: 'Operation', color: DEFAULT_BRAND_COLOR },
   { path: '/operation/label-printing', label: 'Label Printing', section: 'Operation', color: DEFAULT_BRAND_COLOR },
-  { path: '/operation/showroom-open-stock', label: 'Showroom Open Stock', section: 'Operation', color: DEFAULT_BRAND_COLOR },
   { path: '/operation/showroom-label-printing', label: 'Showroom Label Printing', section: 'Operation', color: DEFAULT_BRAND_COLOR },
 
   // Production

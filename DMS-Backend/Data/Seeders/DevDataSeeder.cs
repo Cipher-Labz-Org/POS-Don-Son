@@ -61,7 +61,6 @@ public sealed class DevDataSeeder
                 await SeedDemoUsersAsync();
             }
 
-            await SeedShowroomOpenStockAsync();
             await EnsurePosCatalogReadyAsync();
             _logger.LogInformation("Dev data seed completed successfully");
         }
@@ -467,46 +466,5 @@ public sealed class DevDataSeeder
         }
 
         await _context.SaveChangesAsync();
-    }
-
-    private async Task SeedShowroomOpenStockAsync()
-    {
-        if (await _context.ShowroomOpenStocks.AnyAsync())
-        {
-            _logger.LogInformation("Showroom open stock data already exists, skipping");
-            return;
-        }
-
-        var outlets = await _context.Outlets
-            .Where(o => o.IsActive)
-            .OrderBy(o => o.Code)
-            .ToListAsync();
-
-        if (!outlets.Any())
-        {
-            _logger.LogWarning("No outlets found, skipping showroom open stock seeding");
-            return;
-        }
-
-        var defaultStockDate = new DateTime(2026, 1, 10, 0, 0, 0, DateTimeKind.Utc);
-        var showroomOpenStocks = new List<ShowroomOpenStock>();
-
-        foreach (var outlet in outlets)
-        {
-            showroomOpenStocks.Add(new ShowroomOpenStock
-            {
-                Id = Guid.NewGuid(),
-                OutletId = outlet.Id,
-                StockAsAt = defaultStockDate,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow,
-                UpdatedAt = DateTime.UtcNow
-            });
-        }
-
-        _context.ShowroomOpenStocks.AddRange(showroomOpenStocks);
-        await _context.SaveChangesAsync();
-
-        _logger.LogInformation($"Showroom open stock seeded for {showroomOpenStocks.Count} outlets with date {defaultStockDate:yyyy-MM-dd}");
     }
 }

@@ -205,7 +205,6 @@ builder.Services.AddScoped<IPosThemeConfigService, PosThemeConfigService>();
 builder.Services.AddScoped<ICancellationService, CancellationService>();
 builder.Services.AddScoped<IDeliveryReturnService, DeliveryReturnService>();
 builder.Services.AddScoped<IStockBFService, StockBFService>();
-builder.Services.AddScoped<IShowroomOpenStockService, ShowroomOpenStockService>();
 builder.Services.AddScoped<ILabelPrintRequestService, LabelPrintRequestService>();
 builder.Services.AddScoped<IShowroomLabelRequestService, ShowroomLabelRequestService>();
 builder.Services.AddScoped<IOperationApprovalRecorder, OperationApprovalRecorderService>();

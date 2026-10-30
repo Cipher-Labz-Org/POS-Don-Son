@@ -496,17 +496,6 @@ public sealed class ComprehensivePermissionSeeder
         }));
 
         // ============================================================
-        // OPERATION MODULE - Showroom Open Stock
-        // ============================================================
-        permissions.AddRange(CreatePermissionsFromCodes("Operation", "ShowroomOpenStock", new[]
-        {
-            ("operation:showroom-open-stock:view", "View", "View showroom open stock"),
-            ("operation:showroom-open-stock:create", "Create", "Create open stock entries"),
-            ("operation:showroom-open-stock:update", "Update", "Update open stock"),
-            ("operation:showroom-open-stock:delete", "Delete", "Delete open stock")
-        }));
-
-        // ============================================================
         // PRODUCTION MODULE - Unified Approvals
         // ============================================================
         permissions.AddRange(CreatePermissionsFromCodes("Production", "Approvals", new[]
@@ -959,7 +948,6 @@ public sealed class ComprehensivePermissionSeeder
         ("operation:cancellation", "Operation", "Cancellation"),
         ("operation:label-printing", "Operation", "LabelPrinting"),
         ("operation:showroom-label-printing", "Operation", "ShowroomLabelPrinting"),
-        ("operation:showroom-open-stock", "Operation", "ShowroomOpenStock"),
         ("operation:approvals", "Operation", "Approvals"),
 
         // Production
