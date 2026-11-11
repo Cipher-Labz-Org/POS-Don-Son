@@ -121,6 +121,13 @@ function CategoryPageContent() {
       ),
     },
     {
+      key: 'sortOrder',
+      label: 'POS sort',
+      render: (item: Category) => (
+        <span className="font-mono tabular-nums">{item.sortOrder ?? 0}</span>
+      ),
+    },
+    {
       key: 'productCount',
       label: 'Products',
       render: (item: Category) => (

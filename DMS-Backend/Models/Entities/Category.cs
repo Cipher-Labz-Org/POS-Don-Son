@@ -17,6 +17,9 @@ public class Category : BaseEntity
 
     public bool DisplayInPOS { get; set; } = true;
 
+    /// <summary>POS category tab order (lower appears first).</summary>
+    public int SortOrder { get; set; }
+
     // Navigation properties
     public ICollection<Product>? Products { get; set; }
 }

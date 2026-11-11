@@ -22,3 +22,8 @@ export function formatReceiptContact(showroomPhone?: string | null): string {
   if (digitsOnly(local) === digitsOnly(RECEIPT_HQ_PHONE)) return RECEIPT_HQ_PHONE
   return `${RECEIPT_HQ_PHONE} / ${local}`
 }
+
+/** Local showroom number only (for bill body under Showroom name). */
+export function formatShowroomBillPhone(showroomPhone?: string | null): string {
+  return (showroomPhone ?? '').trim()
+}

@@ -42,7 +42,6 @@ export function NewTransferPage({ onBack }: Props) {
   const [submitting, setSubmitting]   = useState(false)
   const submittingRef = useRef(false)
   const [kbField, setKbField] = useState<'comment' | 'search' | null>(null)
-  const [pendingProduct, setPendingProduct] = useState<ProductRow | null>(null)
   const [duplicateId, setDuplicateId] = useState<string | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
   const qtyRef = useRef<HTMLInputElement>(null)
@@ -94,7 +93,6 @@ export function NewTransferPage({ onBack }: Props) {
     setRows([])
     setNotes('')
     setSearch('')
-    setPendingProduct(null)
     setQty('1')
   }, [businessDay])
 
@@ -108,16 +106,6 @@ export function NewTransferPage({ onBack }: Props) {
     [products, search],
   )
 
-  function focusQtySelected() {
-    setQty('1')
-    window.setTimeout(() => {
-      const el = qtyRef.current
-      if (!el) return
-      el.focus()
-      el.select()
-    }, 0)
-  }
-
   function focusSearch() {
     window.setTimeout(() => {
       const el = searchRef.current
@@ -127,32 +115,30 @@ export function NewTransferPage({ onBack }: Props) {
     }, 0)
   }
 
-  function selectProduct(p: ProductRow) {
-    setPendingProduct(p)
-    setSearch('')
-    setShowDrop(false)
-    setKbField(null)
-    const already = rows.some((r) => r.productId === p.id)
-    setDuplicateId(already ? p.id : null)
-    focusQtySelected()
-    if (already) {
-      window.setTimeout(() => {
-        document.getElementById(`transfer-line-${p.id}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
-      }, 0)
-    }
+  function addProductFromSearch(p: ProductRow) {
+    addRow(p)
   }
 
   function addRow(p?: ProductRow) {
-    const target = p ?? pendingProduct
+    let target = p
+    if (!target && search.trim()) {
+      const matches = filterItemChoices(products, search, { limit: 2 })
+      if (matches.length === 1) target = matches[0]
+    }
     if (!target) { toast('Select an item first.', 'info'); focusSearch(); return }
     const qn = parseFloat(qty.replace(',', '.'))
     if (!Number.isFinite(qn) || qn <= 0) { toast('Enter a valid quantity.', 'error'); return }
+    const scrollExisting = rows.some((r) => r.productId === target!.id)
     setRows((prev) => {
-      const existing = prev.find((x) => x.productId === target.id)
-      if (existing) return prev.map((x) => x.productId === target.id ? { ...x, qty: qn } : x)
-      return [...prev, { productId: target.id, name: target.name, code: target.code, qty: qn }]
+      const existing = prev.find((x) => x.productId === target!.id)
+      if (existing) return prev.map((x) => x.productId === target!.id ? { ...x, qty: qn } : x)
+      return [...prev, { productId: target!.id, name: target!.name, code: target!.code, qty: qn }]
     })
-    setPendingProduct(null)
+    if (scrollExisting) {
+      window.setTimeout(() => {
+        document.getElementById(`transfer-line-${target!.id}`)?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+      }, 0)
+    }
     setDuplicateId(null)
     setSearch('')
     setQty('1')
@@ -309,15 +295,12 @@ export function NewTransferPage({ onBack }: Props) {
         <div className="relative mb-4 flex flex-wrap items-end gap-3">
           <ItemSearchField
             value={search}
-            onChange={(next) => {
-              setSearch(next)
-              setPendingProduct(null)
-            }}
+            onChange={setSearch}
             inputRef={searchRef}
             open={showDrop}
             onOpenChange={setShowDrop}
             items={filtered}
-            onSelect={selectProduct}
+            onSelect={addProductFromSearch}
             onOpenKeyboard={() => setKbField('search')}
           />
           <div>
@@ -390,7 +373,7 @@ export function NewTransferPage({ onBack }: Props) {
             }}
             onClose={() => setKbField(null)}
             onEnter={() => {
-              if (kbField === 'search' && search.trim() && filtered[0]) selectProduct(filtered[0])
+              if (kbField === 'search' && search.trim() && filtered[0]) addProductFromSearch(filtered[0])
             }}
             label={kbField === 'comment' ? 'Comment' : 'Item search'}
             placeholder={kbField === 'comment' ? 'Optional comment' : 'Search item code or name'}

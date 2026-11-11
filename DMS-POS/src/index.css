@@ -202,6 +202,23 @@ html.pos-osk-open #root {
   letter-spacing: -0.03em;
 }
 
+/* Left bill panel — slightly larger line text for cashier readability */
+.pos-bill-panel .pos-bill-table {
+  font-size: 1.0625rem;
+}
+.pos-bill-panel .pos-bill-item {
+  font-size: 1.1875rem;
+  line-height: 1.35;
+  font-weight: 600;
+}
+.pos-bill-panel .pos-bill-amount,
+.pos-bill-panel .pos-bill-qty {
+  font-size: 1.0625rem;
+}
+.pos-bill-panel .pos-bill-table thead th {
+  font-size: 0.9375rem;
+}
+
 /* ─── Touch targets (WCAG 2.5.5) ─── */
 .pos-tap {
   min-height: 44px;

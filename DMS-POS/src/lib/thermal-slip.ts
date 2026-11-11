@@ -99,3 +99,31 @@ export function signatureWriteFieldHtml(caption: string): string {
   <div class="sig-cap">${escapeHtml(caption)}</div>
 </div>`
 }
+
+/**
+ * Transfer / Delivery Return footer signatures.
+ * COPY: sender keeps this slip — name + one signature line.
+ * ORIGINAL: document that travels — sender + receiver name & signatures.
+ */
+export function operationNoteSignatureFooterHtml(
+  submittedByName: string,
+  variant: 'original' | 'copy',
+): string {
+  const name = escapeHtml(submittedByName)
+  const submittedSignature = signatureWriteFieldHtml('Submitted By Signature')
+
+  if (variant === 'copy') {
+    return `<div class="meta">Submitted By : ${name}</div>
+<div class="sig-section">${submittedSignature}</div>`
+  }
+
+  return `<div class="meta">Submitted By : ${name}</div>
+<div class="sig-section">${submittedSignature}</div>
+<div class="sig-section">
+  <div class="sig-k">Received By :</div>
+  ${signatureWriteFieldHtml('Received By Name')}
+</div>
+<div class="sig-section">
+  ${signatureWriteFieldHtml('Received By Signature')}
+</div>`
+}

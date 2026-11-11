@@ -56,6 +56,9 @@ export function PrintPreviewModal({ opts, onClose }: Props) {
 
             {/* Transaction info */}
             <div className="mb-1 text-[10px] font-normal">Showroom : {opts.outletLabel}</div>
+            {opts.showroomPhone ? (
+              <div className="mb-1 text-[10px] font-normal">Tel : {opts.showroomPhone}</div>
+            ) : null}
             {opts.dateTime && (
               <div className="mb-1 text-[10px] font-normal">Date: {opts.dateTime}</div>
             )}

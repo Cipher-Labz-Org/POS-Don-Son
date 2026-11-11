@@ -8,5 +8,6 @@ public class CategoryListItemDto
     public string? Description { get; set; }
     public bool DisplayInPOS { get; set; }
     public bool IsActive { get; set; }
+    public int SortOrder { get; set; }
     public int ProductCount { get; set; }
 }

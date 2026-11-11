@@ -57,7 +57,9 @@ public class CategoryService : ICategoryService
         var totalCount = await query.CountAsync(cancellationToken);
 
         var categories = await query
-            .OrderBy(c => c.Code)
+            .OrderBy(c => c.SortOrder)
+            .ThenBy(c => c.Name)
+            .ThenBy(c => c.Code)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(cancellationToken);
@@ -127,6 +129,7 @@ public class CategoryService : ICategoryService
         category.Description = dto.Description;
         category.DisplayInPOS = dto.DisplayInPOS;
         category.IsActive = dto.IsActive;
+        category.SortOrder = dto.SortOrder;
         category.UpdatedById = userId;
         category.UpdatedAt = DateTime.UtcNow;
 

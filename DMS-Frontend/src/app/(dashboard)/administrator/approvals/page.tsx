@@ -31,7 +31,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { ProtectedPage } from '@/components/auth';
 import toast from 'react-hot-toast';
 import { appConfirm } from '@/lib/app-notify';
-import { formatSlDate, formatSlDateTime } from '@/lib/sri-lanka-time';
+import { formatSlDate, formatSlDateSlashMon, formatSlDateTime } from '@/lib/sri-lanka-time';
 
 // ─── Section / subsection config ──────────────────────────────────────────────
 
@@ -1928,7 +1928,7 @@ function PriceChangeApprovalDetailsView({ approval }: { approval: any }) {
   if (!approval) return null;
   const data = parseApprovalJson(approval.requestData ?? approval.RequestData);
   const comment = String(jsonPick(data, 'comment', 'Comment') ?? approval.notes ?? '').trim();
-  const effectiveFrom = String(jsonPick(data, 'effectiveFrom', 'EffectiveFrom') ?? '').slice(0, 10);
+  const effectiveFromRaw = String(jsonPick(data, 'effectiveFrom', 'EffectiveFrom') ?? '').trim();
   const rawItems = jsonPick(data, 'items', 'Items');
   const items = Array.isArray(rawItems)
     ? rawItems.map((row) => {
@@ -1950,7 +1950,11 @@ function PriceChangeApprovalDetailsView({ approval }: { approval: any }) {
             <InfoField label="Reference" value={approval.entityReference || approval.entityId} highlight />
             <InfoField
               label="Effective Date"
-              value={effectiveFrom ? formatSlDate(effectiveFrom) : formatSlDateTime(approval.requestedAt)}
+              value={
+                effectiveFromRaw
+                  ? formatSlDateSlashMon(effectiveFromRaw)
+                  : formatSlDateTime(approval.requestedAt)
+              }
             />
             <InfoField label="Requested By" value={approval.requestedByName || approval.RequestedByName || '—'} />
           </InfoGrid>
@@ -2047,7 +2051,7 @@ function CashierBalanceApprovalDetailsView({ approval }: { approval: any }) {
   const cashierName = String(jsonPick(data, 'cashierName', 'CashierName') ?? '').trim();
   const outletName = String(jsonPick(data, 'outletName', 'OutletName') ?? approval.entityReference ?? '').trim();
   const outletCode = String(jsonPick(data, 'outletCode', 'OutletCode') ?? '').trim();
-  const processDate = String(jsonPick(data, 'processDate', 'ProcessDate') ?? '').slice(0, 10);
+  const processDateRaw = String(jsonPick(data, 'processDate', 'ProcessDate') ?? '').trim();
 
   return (
     <DetailPanel>
@@ -2059,7 +2063,10 @@ function CashierBalanceApprovalDetailsView({ approval }: { approval: any }) {
               value={outletCode ? `${outletCode} — ${outletName || 'Showroom'}` : outletName || '—'}
               highlight
             />
-            <InfoField label="Date" value={processDate ? formatSlDate(processDate) : formatSlDateTime(approval.requestedAt)} />
+            <InfoField
+              label="Date"
+              value={processDateRaw ? formatSlDateSlashMon(processDateRaw) : formatSlDateTime(approval.requestedAt)}
+            />
             <InfoField label="Requested By" value={approval.requestedByName || approval.RequestedByName || '—'} />
           </InfoGrid>
         </DetailSectionTint>

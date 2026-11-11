@@ -7,4 +7,5 @@ public class CreateCategoryDto
     public string? Description { get; set; }
     public bool DisplayInPOS { get; set; } = true;
     public bool IsActive { get; set; } = true;
+    public int SortOrder { get; set; }
 }

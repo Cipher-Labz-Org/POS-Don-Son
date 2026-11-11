@@ -17,7 +17,13 @@ import { fetchOutletsPage, fetchPendingTransferCount, fetchPosSaleRecordsUnreadC
 import { enqueueMutation, processPendingQueue } from '../lib/sync-queue'
 import { useOnlineStatus } from '../lib/use-online-status'
 import { isElectronPos, printReceiptHtml, type PrintReceiptOpts } from '../lib/print-receipt'
-import { formatReceiptContact, RECEIPT_COMPANY_ADDRESS, RECEIPT_COMPANY_NAME, RECEIPT_FOOD_POLICY } from '../lib/receipt-company'
+import {
+  formatReceiptContact,
+  formatShowroomBillPhone,
+  RECEIPT_COMPANY_ADDRESS,
+  RECEIPT_COMPANY_NAME,
+  RECEIPT_FOOD_POLICY,
+} from '../lib/receipt-company'
 import { toast } from '../lib/toast-store'
 import { formatSubmitError, isUnreachableNetworkError } from '../lib/api-errors'
 import { useSriLankaBusinessDay } from '../lib/use-sri-lanka-business-day'
@@ -432,6 +438,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
   const currentOutlet = useMemo(() => outlets.find((o) => o.id === outletId), [outlets, outletId])
   const receiptCompanyAddress = RECEIPT_COMPANY_ADDRESS
   const receiptCompanyPhone = formatReceiptContact(currentOutlet?.phone)
+  const receiptShowroomPhone = formatShowroomBillPhone(currentOutlet?.phone)
 
   function beginPostSale(receipt: {
     outletLabel: string
@@ -456,6 +463,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
         companyAddress: receiptCompanyAddress,
         companyPhone: `Tel: ${receiptCompanyPhone}`,
         outletLabel: receipt.outletLabel,
+        showroomPhone: receiptShowroomPhone || undefined,
         lines: receipt.lines,
         total: receipt.total,
         cash: receipt.cash,
@@ -595,6 +603,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
         companyAddress: receiptCompanyAddress,
         companyPhone: `Tel: ${receiptCompanyPhone}`,
         outletLabel,
+        showroomPhone: receiptShowroomPhone || undefined,
         lines: lines.map((l) => ({ name: l.name, unitPrice: l.unitPrice, qty: l.qty, amount: l.qty * l.unitPrice })),
         total: sub,
         cash: sub,
@@ -609,6 +618,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
         companyAddress: receiptCompanyAddress,
         companyPhone: `Tel: ${receiptCompanyPhone}`,
         outletLabel: lastReceipt.outletLabel,
+        showroomPhone: receiptShowroomPhone || undefined,
         lines: lastReceipt.lines,
         total: lastReceipt.total,
         cash: lastReceipt.cash,
@@ -914,7 +924,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
         style={{ transform: `scale(${scale})`, transformOrigin: 'top left', width: `${100 / scale}%`, height: `${100 / scale}%` }}>
 
         {/* ── LEFT: Bill panel ── */}
-        <section className="flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white">
+        <section className="pos-bill-panel flex min-h-0 min-w-0 flex-col overflow-hidden border-r border-[var(--border)] bg-white">
 
           <div className="flex-shrink-0 border-b border-[var(--border)] px-4 py-3">
             <h2 className="font-pos-title text-xl font-bold text-[var(--foreground)]">Bill</h2>
@@ -927,13 +937,13 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                 <p className="max-w-xs text-xs text-[var(--neutral-400)]">Tap a product on the right to add it.</p>
               </div>
             ) : (
-              <table className="w-full table-fixed text-left text-sm">
+              <table className="pos-bill-table w-full table-fixed text-left">
                 <colgroup>
                   <col />
                   <col className="w-[9.5rem]" />
                   <col className="w-[5.75rem]" />
                 </colgroup>
-                <thead className="sticky top-0 z-10 border-b border-[var(--border)] bg-white text-xs font-semibold text-[var(--muted-foreground)]">
+                <thead className="sticky top-0 z-10 border-b border-[var(--border)] bg-white font-semibold text-[var(--muted-foreground)]">
                   <tr>
                     <th className="px-3 py-2">Item</th>
                     <th className="px-2 py-2 text-center">Qty</th>
@@ -943,7 +953,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                 <tbody className="divide-y divide-[var(--border)]">
                   {lines.map((l) => (
                     <tr key={l.productId}>
-                      <td className="truncate px-3 py-2.5 text-sm font-medium text-[var(--foreground)]" title={l.name}>{l.name}</td>
+                      <td className="pos-bill-item truncate px-3 py-2.5 text-[var(--foreground)]" title={l.name}>{l.name}</td>
                       <td className="px-2 py-2.5">
                         <div className="flex items-center justify-center gap-1.5">
                           <button type="button" className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-primary)] text-white" onClick={() => remove(l.productId)} aria-label={`Remove ${l.name}`}>
@@ -952,7 +962,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                           <button type="button" className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-primary)] text-white" onClick={() => dec(l.productId)} aria-label={`Decrease ${l.name}`}>
                             <Minus className="h-3.5 w-3.5" />
                           </button>
-                          <button type="button" className="min-w-[1.25rem] text-center text-sm font-bold tabular-nums"
+                          <button type="button" className="pos-bill-qty min-w-[1.35rem] text-center font-bold tabular-nums"
                             onClick={() => setNumpad({ productId: l.productId, name: l.name, currentQty: l.qty })}>
                             {l.qty}
                           </button>
@@ -961,7 +971,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                           </button>
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 text-right text-sm font-semibold tabular-nums">
+                      <td className="pos-bill-amount px-3 py-2.5 text-right font-semibold tabular-nums">
                         {(l.qty * l.unitPrice).toFixed(2)}
                       </td>
                     </tr>

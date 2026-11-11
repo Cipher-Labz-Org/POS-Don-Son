@@ -1,5 +1,5 @@
 import { printCopyThenOriginal } from './print-receipt'
-import { signatureWriteFieldHtml, extraLineFeedsHtml, THERMAL_SLIP_CSS } from './thermal-slip'
+import { extraLineFeedsHtml, operationNoteSignatureFooterHtml, THERMAL_SLIP_CSS } from './thermal-slip'
 
 export type ReturnNoteLine = {
   code: string
@@ -51,10 +51,6 @@ function commentText(opts: ReturnNoteOpts): string {
   return t || '-'
 }
 
-function dottedLine(caption: string): string {
-  return signatureWriteFieldHtml(caption)
-}
-
 function buildReturnNoteHtml(opts: ReturnNoteOpts, variant: 'original' | 'copy'): string {
   const stamp = variant === 'original' ? 'RETURN ORIGINAL' : 'RETURN COPY'
   const rows = opts.lines
@@ -68,23 +64,7 @@ function buildReturnNoteHtml(opts: ReturnNoteOpts, variant: 'original' | 'copy')
     )
     .join('')
 
-  const cashierLine = `<div class="meta">Submitted By : ${escapeHtml(opts.submittedBy)}</div>`
-  const footer =
-    variant === 'original'
-      ? `${cashierLine}
-<div class="sig-section">
-  <div class="sig-k">Submitted By :</div>
-  ${dottedLine('Submitted By Signature')}
-</div>
-<div class="sig-section">
-  <div class="sig-k">Received By :</div>
-  ${dottedLine('Received By Name')}
-</div>
-<div class="sig-section">
-  <div class="sig-k">Received By :</div>
-  ${dottedLine('Received By Signature')}
-</div>`
-      : cashierLine
+  const footer = operationNoteSignatureFooterHtml(opts.submittedBy, variant)
 
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${stamp}</title>
 <style>

@@ -14,7 +14,7 @@ import { priceListsApi, type PriceList } from '@/lib/api/price-lists';
 import { productsApi, type Product } from '@/lib/api/products';
 import CsvBulkUploadBar from '@/components/dms/CsvBulkUploadBar';
 import { foldProductSearch } from '@/lib/product-search';
-import { formatCalendarDateInZone, formatSlDateSlashMon } from '@/lib/sri-lanka-time';
+import { formatCalendarDateInZone, formatSlDateSlashMon, formatSlDateTime } from '@/lib/sri-lanka-time';
 
 const PAGE_SIZES = [10, 25, 50];
 
@@ -23,15 +23,13 @@ function fmtEffectiveFrom(iso: string): string {
   return formatSlDateSlashMon(iso);
 }
 
-/** Format edit date as M/D/YYYY H:MM:SS AM/PM */
+/** Edit timestamp in Sri Lanka local time. */
 function fmtEditDate(iso: string): string {
   if (!iso) return '-';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  return d.toLocaleString('en-US', {
+  return formatSlDateTime(iso, {
+    year: 'numeric',
     month: 'numeric',
     day: 'numeric',
-    year: 'numeric',
     hour: 'numeric',
     minute: '2-digit',
     second: '2-digit',

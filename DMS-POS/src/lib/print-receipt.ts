@@ -5,6 +5,8 @@ export type PrintReceiptOpts = {
   companyAddress?: string
   companyPhone?: string
   outletLabel: string
+  /** Showroom local number (DMS Showrooms → Phone), printed under Showroom line. */
+  showroomPhone?: string
   lines: { name: string; unitPrice: number; qty: number; amount: number }[]
   total: number
   cash: number
@@ -86,6 +88,7 @@ td{padding:4px 1px;vertical-align:top;font-weight:400;font-size:12px}
 </div>
 <div class="divider"></div>
 <div class="info-line">Showroom : ${escapeHtml(opts.outletLabel)}</div>
+${opts.showroomPhone ? `<div class="info-line">Tel : ${escapeHtml(opts.showroomPhone)}</div>` : ''}
 ${opts.dateTime ? `<div class="info-line">Date: ${escapeHtml(opts.dateTime)}</div>` : ''}
 ${opts.cashier ? `<div class="info-line">Cashier: ${escapeHtml(opts.cashier)}</div>` : ''}
 ${opts.saleNo ? `<div class="info-line">Bill No: ${escapeHtml(opts.saleNo)}</div>` : ''}

@@ -1137,11 +1137,13 @@ public sealed class ApplicationDbContext : DbContext
             entity.Property(e => e.Name).HasMaxLength(100).IsRequired();
             entity.Property(e => e.Description).HasMaxLength(500);
             entity.Property(e => e.IsActive).HasDefaultValue(true);
+            entity.Property(e => e.SortOrder).HasDefaultValue(0);
             entity.Property(e => e.CreatedAt).HasDefaultValueSql("NOW()");
             entity.Property(e => e.UpdatedAt).HasDefaultValueSql("NOW()");
 
             entity.HasIndex(e => e.Code).IsUnique();
             entity.HasIndex(e => e.IsActive);
+            entity.HasIndex(e => e.SortOrder);
         });
 
         // UnitOfMeasure entity configuration

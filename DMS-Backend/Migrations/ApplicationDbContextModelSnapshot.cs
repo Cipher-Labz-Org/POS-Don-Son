@@ -688,6 +688,11 @@ namespace DMS_Backend.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
+                    b.Property<int>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -704,6 +709,8 @@ namespace DMS_Backend.Migrations
                     b.HasIndex("CreatedById");
 
                     b.HasIndex("IsActive");
+
+                    b.HasIndex("SortOrder");
 
                     b.HasIndex("UpdatedById");
 
