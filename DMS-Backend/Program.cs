@@ -296,6 +296,9 @@ using (var scope = app.Services.CreateScope())
         // outlets.pos_verification_code — login joins Outlet and 500s if the column is missing.
         await context.EnsureOutletColumnsAsync();
 
+        // categories.SortOrder — POS catalog sync 500s if the column is missing after deploy.
+        await context.EnsureCategoryColumnsAsync();
+
         // sale_records_settings + cashier_sale_notifications
         await context.EnsureSaleRecordsTablesAsync();
 

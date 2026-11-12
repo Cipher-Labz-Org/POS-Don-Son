@@ -28,7 +28,22 @@ export function formatSubmitError(err: unknown): string {
       const status = err.response.status
       if (status === 401) return 'Your session expired. Please sign in again.'
       if (status === 403) return 'You do not have permission for this action.'
-      if (status >= 500) return 'The server had a problem. Try again later.'
+      if (status >= 500) {
+        const raw = err.response.data
+        const detail =
+          typeof raw === 'string'
+            ? raw.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 240)
+            : typeof raw === 'object' && raw !== null
+              ? String(
+                  (raw as Record<string, unknown>).detail
+                    ?? (raw as Record<string, unknown>).title
+                    ?? (raw as Record<string, unknown>).message
+                    ?? '',
+                ).trim()
+              : ''
+        if (detail) return `Server error (${status}): ${detail}`
+        return 'The server had a problem. Try again later.'
+      }
     }
     // No HTTP response: wrong URL, backend down, CORS, blocked mixed content, etc.
     if (isUnreachableNetworkError(err)) {

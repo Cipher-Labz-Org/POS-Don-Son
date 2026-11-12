@@ -70,7 +70,7 @@ export async function syncCatalogFromServer(): Promise<void> {
       )
     }
   } catch (err) {
-    throw new Error(formatSubmitError(err))
+    throw new Error(`Products download failed: ${formatSubmitError(err)}`)
   }
 
   page = 1
@@ -89,7 +89,7 @@ export async function syncCatalogFromServer(): Promise<void> {
       page += 1
     } while (page <= maxPages)
   } catch (err) {
-    throw new Error(formatSubmitError(err))
+    throw new Error(`Categories download failed: ${formatSubmitError(err)}`)
   }
 
   if (prods.length === 0) {
