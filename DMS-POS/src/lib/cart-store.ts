@@ -8,6 +8,7 @@ interface CartState {
   dec: (productId: string) => void
   remove: (productId: string) => void
   clear: () => void
+  setLines: (lines: CartLine[]) => void
   applyCatalogPrices: (products: { productId: string; unitPrice: number }[]) => void
   subtotal: () => number
 }
@@ -62,6 +63,8 @@ export const useCartStore = create<CartState>((set, get) => ({
     })),
 
   clear: () => set({ lines: [] }),
+
+  setLines: (lines) => set({ lines: lines.map((l) => ({ ...l })) }),
 
   applyCatalogPrices: (products) =>
     set((s) => {

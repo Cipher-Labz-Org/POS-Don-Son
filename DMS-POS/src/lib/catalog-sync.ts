@@ -5,6 +5,16 @@ import { useSettingsStore } from './settings-store'
 import type { CategoryRow, ProductRow } from './types'
 import { todayCalendarISO } from './calendar-date'
 
+function asBool(value: unknown, whenMissing: boolean): boolean {
+  if (value === undefined || value === null || value === '') return whenMissing
+  if (typeof value === 'boolean') return value
+  if (typeof value === 'number') return value !== 0
+  const s = String(value).trim().toLowerCase()
+  if (s === 'true' || s === '1' || s === 'yes') return true
+  if (s === 'false' || s === '0' || s === 'no') return false
+  return whenMissing
+}
+
 function mapProduct(p: Record<string, unknown>): ProductRow {
   const ros = p.requireOpenStock ?? p.RequireOpenStock
   const dip = p.displayInPOS ?? p.DisplayInPOS
@@ -16,8 +26,9 @@ function mapProduct(p: Record<string, unknown>): ProductRow {
     categoryId: String(p.categoryId ?? p.CategoryId ?? ''),
     categoryName: String(p.categoryName ?? p.CategoryName ?? ''),
     sortOrder: Number(p.sortOrder ?? p.SortOrder ?? 0),
-    requireOpenStock: ros === undefined || ros === null ? true : Boolean(ros),
-    displayInPOS: dip === undefined || dip === null ? true : Boolean(dip),
+    // Missing flag must not default true — Stock BF would list every product.
+    requireOpenStock: asBool(ros, false),
+    displayInPOS: asBool(dip, true),
   }
 }
 

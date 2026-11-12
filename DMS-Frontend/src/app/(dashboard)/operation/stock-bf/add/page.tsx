@@ -133,7 +133,7 @@ function AddStockBFPageContent() {
       const response = await productsApi.getAll(1, 5000, undefined, undefined, true, formData.bfDate);
       const list = Array.isArray(response.products) ? response.products : [];
       setProducts(
-        list.filter((p) => p.isActive !== false && p.displayInPOS !== false),
+        list.filter((p) => p.isActive !== false && p.displayInPOS !== false && p.requireOpenStock === true),
       );
     } catch (error: any) {
       const msg =

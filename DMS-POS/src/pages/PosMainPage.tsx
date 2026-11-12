@@ -6,10 +6,11 @@ import {
   Cloud, History, Inbox, LogOut, Menu,
   Minus, Package, Plus, Printer, Bell,
   Search, Star, Truck, Undo2,
-  Trash2, Wallet, X, Maximize2, Power, Stethoscope, UserRound,
+  Pause, Trash2, Wallet, X, Maximize2, Power, Stethoscope, UserRound,
 } from 'lucide-react'
 import { useAuthStore } from '../lib/auth-store'
 import { useCartStore } from '../lib/cart-store'
+import { useHeldBillStore } from '../lib/held-bill-store'
 import { useFavoriteStore } from '../lib/favorite-store'
 import { useSettingsStore } from '../lib/settings-store'
 import { syncCatalogFromServer } from '../lib/catalog-sync'
@@ -101,7 +102,16 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
   const remove   = useCartStore((s) => s.remove)
   const subtotal = useCartStore((s) => s.subtotal)
   const clear    = useCartStore((s) => s.clear)
+  const setCartLines = useCartStore((s) => s.setLines)
   const applyCatalogPrices = useCartStore((s) => s.applyCatalogPrices)
+  const holdBill = useHeldBillStore((s) => s.hold)
+  const recallHeldBill = useHeldBillStore((s) => s.recall)
+  const removeHeldBill = useHeldBillStore((s) => s.remove)
+  const heldBillsAll = useHeldBillStore((s) => s.bills)
+  const heldBills = useMemo(
+    () => (outletId ? heldBillsAll.filter((b) => b.outletId === outletId).sort((a, b) => b.heldAt - a.heldAt) : []),
+    [heldBillsAll, outletId],
+  )
 
   const toggleFav = useFavoriteStore((s) => s.toggle)
   const isFav     = useFavoriteStore((s) => s.isFav)
@@ -133,16 +143,17 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
   const [previewOpts, setPreviewOpts] = useState<PrintReceiptOpts | null>(null)
   const [postSale, setPostSale] = useState<PostSaleState | null>(null)
   const [confirmClear, setConfirmClear] = useState(false)
+  const [heldListOpen, setHeldListOpen] = useState(false)
+  const [recallConfirmId, setRecallConfirmId] = useState<string | null>(null)
   const [confirmShutdown, setConfirmShutdown] = useState(false)
   const [shuttingDown, setShuttingDown] = useState(false)
   const [catsExpanded, setCatsExpanded] = useState(false)
-  const [catPage, setCatPage] = useState(0)
   const [saleRecordUnread, setSaleRecordUnread] = useState(0)
   const [pendingTransferCount, setPendingTransferCount] = useState(0)
-  const CATS_PER_PAGE = 4
   const POS_TILE_BASE_PX = 172
 
   const catalogScrollRef = useRef<HTMLDivElement>(null)
+  const catScrollRef = useRef<HTMLDivElement>(null)
   const searchInputRef = useRef<HTMLInputElement>(null)
   const scale = zoomPercent / 100
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -419,17 +430,14 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
     return cols
   }, [categories])
 
-  const catPageCount = Math.max(1, Math.ceil(catRow.length / CATS_PER_PAGE))
-  const visibleCats = catsExpanded
-    ? catRow
-    : catRow.slice(catPage * CATS_PER_PAGE, catPage * CATS_PER_PAGE + CATS_PER_PAGE)
-
-  useEffect(() => {
-    setCatPage((p) => Math.min(p, catPageCount - 1))
-  }, [catPageCount])
-
   function selectCategory(id: string) {
     setCategoryId(id)
+  }
+
+  function scrollCategoryStrip(dir: -1 | 1) {
+    const el = catScrollRef.current
+    if (!el) return
+    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: 'smooth' })
   }
 
   const sub = subtotal()
@@ -586,6 +594,43 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
         toast(formatSubmitError(e), 'error')
       }
     }
+  }
+
+  function handleHoldBill() {
+    if (!outletId) {
+      toast('Showroom is not assigned.', 'error')
+      return
+    }
+    if (lines.length === 0) {
+      if (heldBills.length > 0) setHeldListOpen(true)
+      return
+    }
+    const saved = holdBill({ outletId, cashierName, lines })
+    if (!saved) return
+    setNumpad(null)
+    clear()
+    toast(`Bill held (${heldBills.length + 1}). Tap Hold again to recall.`, 'success')
+  }
+
+  function applyRecall(id: string) {
+    const bill = recallHeldBill(id)
+    if (!bill) {
+      toast('Held bill was not found.', 'error')
+      return
+    }
+    setNumpad(null)
+    setCartLines(bill.lines)
+    setRecallConfirmId(null)
+    setHeldListOpen(false)
+    toast('Held bill restored', 'success')
+  }
+
+  function handleRecallBill(id: string) {
+    if (lines.length > 0) {
+      setRecallConfirmId(id)
+      return
+    }
+    applyRecall(id)
   }
 
   // ── Print ───────────────────────────────────────────────────────────────────
@@ -953,8 +998,10 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                 <tbody className="divide-y divide-[var(--border)]">
                   {lines.map((l) => (
                     <tr key={l.productId}>
-                      <td className="pos-bill-item truncate px-3 py-2.5 text-[var(--foreground)]" title={l.name}>{l.name}</td>
-                      <td className="px-2 py-2.5">
+                      <td className="pos-bill-item px-3 py-2.5 align-top text-[var(--foreground)]">
+                        <span className="pos-bill-item-name">{l.name}</span>
+                      </td>
+                      <td className="px-2 py-2.5 align-top">
                         <div className="flex items-center justify-center gap-1.5">
                           <button type="button" className="flex h-7 w-7 items-center justify-center rounded-full bg-[var(--brand-primary)] text-white" onClick={() => remove(l.productId)} aria-label={`Remove ${l.name}`}>
                             <X className="h-3.5 w-3.5" />
@@ -971,7 +1018,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                           </button>
                         </div>
                       </td>
-                      <td className="pos-bill-amount px-3 py-2.5 text-right font-semibold tabular-nums">
+                      <td className="pos-bill-amount px-3 py-2.5 align-top text-right font-semibold tabular-nums">
                         {(l.qty * l.unitPrice).toFixed(2)}
                       </td>
                     </tr>
@@ -994,7 +1041,7 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
               PAY
             </button>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-4 gap-2">
               <button
                 type="button"
                 disabled={lines.length === 0}
@@ -1003,6 +1050,24 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                 aria-label="Clear bill"
               >
                 <Trash2 className="h-6 w-6" />
+              </button>
+              <button
+                type="button"
+                disabled={lines.length === 0 && heldBills.length === 0}
+                onClick={handleHoldBill}
+                onContextMenu={(e) => {
+                  e.preventDefault()
+                  if (heldBills.length > 0) setHeldListOpen(true)
+                }}
+                className="pos-tap relative flex h-14 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-white disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Hold bill"
+              >
+                <Pause className="h-6 w-6" />
+                {heldBills.length > 0 ? (
+                  <span className="absolute -right-1 -top-1 min-w-[1.25rem] rounded-full bg-[var(--brand-accent)] px-1 text-center text-[11px] font-bold leading-5 text-neutral-900">
+                    {heldBills.length}
+                  </span>
+                ) : null}
               </button>
               <button type="button" onClick={handlePrint} className="pos-tap flex h-14 items-center justify-center rounded-lg bg-[var(--brand-accent)] text-neutral-900" aria-label="Print">
                 <Printer className="h-6 w-6" />
@@ -1063,38 +1128,60 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
             <div className="flex min-w-0 items-start gap-1.5">
               <button
                 type="button"
-                disabled={catsExpanded || catPage <= 0}
-                onClick={() => setCatPage((p) => Math.max(0, p - 1))}
+                disabled={catsExpanded}
+                onClick={() => scrollCategoryStrip(-1)}
                 className="pos-tap pos-category-nav pos-category-nav--arrow shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-white disabled:opacity-35"
                 aria-label="Previous categories"
               >
                 <ChevronLeft className="h-6 w-6" aria-hidden />
               </button>
-              <div
-                className="grid min-w-0 flex-1 gap-2.5"
-                style={{
-                  gridTemplateColumns: catsExpanded
-                    ? 'repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr))'
-                    : `repeat(${CATS_PER_PAGE}, minmax(0, 1fr))`,
-                }}
-              >
-                {visibleCats.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => selectCategory(c.id)}
-                    className={`pos-category-btn flex min-w-0 items-center justify-center rounded-xl px-3 text-center text-base font-bold leading-snug shadow-md ${c.colour} ${
-                      categoryId === c.id ? 'ring-2 ring-[var(--brand-accent)] ring-offset-2' : ''
-                    }`}
+              {catsExpanded ? (
+                <div className="pos-category-expand-scroll pos-scroll-visible min-w-0 flex-1">
+                  <div
+                    className="grid gap-2.5"
+                    style={{
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 9.5rem), 1fr))',
+                    }}
                   >
-                    <span className="line-clamp-2 break-words">{c.name.replace('★ ', '')}</span>
-                  </button>
-                ))}
-              </div>
+                    {catRow.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => selectCategory(c.id)}
+                        className={`pos-category-btn flex min-w-0 items-center justify-center rounded-xl px-3 text-center text-base font-bold leading-snug shadow-md ${c.colour} ${
+                          categoryId === c.id ? 'ring-2 ring-[var(--brand-accent)] ring-offset-2' : ''
+                        }`}
+                      >
+                        <span className="line-clamp-2 break-words">{c.name.replace('★ ', '')}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div
+                  ref={catScrollRef}
+                  className="pos-category-strip pos-scroll-x min-w-0 flex-1"
+                >
+                  <div className="pos-category-strip-inner pb-1">
+                    {catRow.map((c) => (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => selectCategory(c.id)}
+                        className={`pos-category-btn flex min-w-0 items-center justify-center rounded-xl px-3 text-center text-base font-bold leading-snug shadow-md ${c.colour} ${
+                          categoryId === c.id ? 'ring-2 ring-[var(--brand-accent)] ring-offset-2' : ''
+                        }`}
+                      >
+                        <span className="line-clamp-2 break-words">{c.name.replace('★ ', '')}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               <button
                 type="button"
-                disabled={catsExpanded || catPage >= catPageCount - 1}
-                onClick={() => setCatPage((p) => Math.min(catPageCount - 1, p + 1))}
+                disabled={catsExpanded}
+                onClick={() => scrollCategoryStrip(1)}
                 className="pos-tap pos-category-nav pos-category-nav--arrow shrink-0 items-center justify-center rounded-lg bg-[var(--brand-primary)] text-white disabled:opacity-35"
                 aria-label="Next categories"
               >
@@ -1110,14 +1197,6 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                 {catsExpanded ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
               </button>
             </div>
-            {!catsExpanded && catPageCount > 1 ? (
-              <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-[var(--neutral-200)]">
-                <div
-                  className="h-full rounded-full bg-[var(--brand-primary)] transition-all"
-                  style={{ width: `${((catPage + 1) / catPageCount) * 100}%` }}
-                />
-              </div>
-            ) : null}
           </div>
 
           <div className="mb-2 flex items-center justify-between">
@@ -1239,6 +1318,81 @@ export function PosMainPage({ onOpenScreen }: PosMainPageProps) {
                 disabled={shuttingDown}
                 className="pos-tap rounded-xl border border-[var(--border)] py-3 text-base font-semibold text-[var(--foreground)] disabled:opacity-50"
                 onClick={() => setConfirmShutdown(false)}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {heldListOpen ? (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-[var(--border)] bg-white shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border)] px-5 py-4">
+              <h3 className="font-pos-title text-xl font-bold">Held bills</h3>
+              <button type="button" className="rounded-lg p-1.5 text-[var(--muted-foreground)]" onClick={() => { setHeldListOpen(false); setRecallConfirmId(null) }} aria-label="Close">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-auto p-3">
+              {heldBills.length === 0 ? (
+                <p className="px-2 py-8 text-center text-sm text-[var(--muted-foreground)]">No held bills.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {heldBills.map((b) => (
+                    <li key={b.id} className="rounded-xl border border-[var(--border)] p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-semibold tabular-nums">Rs {b.total.toFixed(2)}</p>
+                          <p className="text-xs text-[var(--muted-foreground)]">
+                            {b.lines.length} item{b.lines.length === 1 ? '' : 's'} · {new Date(b.heldAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            {b.cashierName ? ` · ${b.cashierName}` : ''}
+                          </p>
+                          <p className="mt-1 line-clamp-2 text-xs text-[var(--foreground)]">
+                            {b.lines.map((l) => `${l.name} ×${l.qty}`).join(', ')}
+                          </p>
+                        </div>
+                        <button type="button" className="rounded-lg p-2 text-[var(--brand-primary)]" onClick={() => removeHeldBill(b.id)} aria-label="Delete held bill">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        className="mt-3 w-full rounded-lg bg-[var(--brand-primary)] py-2.5 text-sm font-bold text-white"
+                        onClick={() => handleRecallBill(b.id)}
+                      >
+                        Recall
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {recallConfirmId ? (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-sm rounded-2xl border border-[var(--border)] bg-white p-6 text-center shadow-2xl">
+            <p className="font-pos-title text-xl font-bold text-[var(--foreground)]">Replace current bill?</p>
+            <p className="mt-2 text-sm text-[var(--muted-foreground)]">The open bill will be held first, then the selected held bill will load.</p>
+            <div className="mt-6 grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                className="pos-tap rounded-xl bg-[var(--brand-primary)] py-3 text-base font-bold text-white"
+                onClick={() => {
+                  if (outletId && lines.length > 0) {
+                    holdBill({ outletId, cashierName, lines })
+                  }
+                  applyRecall(recallConfirmId)
+                }}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                className="pos-tap rounded-xl border border-[var(--border)] py-3 text-base font-semibold text-[var(--foreground)]"
+                onClick={() => setRecallConfirmId(null)}
               >
                 No
               </button>

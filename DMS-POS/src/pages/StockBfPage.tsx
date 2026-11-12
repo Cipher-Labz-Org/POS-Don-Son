@@ -171,7 +171,7 @@ export function StockBfPage({ onBack }: Props) {
   }, [online, outletId, canView, canCreate, reloadNonce, products, businessDay])
 
   const filtered = useMemo(
-    () => filterItemChoices(products, search, { posOnly: true, limit: 20 }),
+    () => filterItemChoices(products, search, { posOnly: true, requireOpenStockOnly: true, limit: 20 }),
     [products, search],
   )
 
@@ -203,6 +203,10 @@ export function StockBfPage({ onBack }: Props) {
       toast('This product is not displayed in POS — it cannot be added to Stock BF.', 'error')
       return
     }
+    if (p.requireOpenStock !== true) {
+      toast('This product does not require open stock — it cannot be added to Stock BF.', 'error')
+      return
+    }
     setPendingProduct(p)
     setSearch(formatSelectedItemSearchLabel(p))
     setShowDrop(false)
@@ -226,6 +230,10 @@ export function StockBfPage({ onBack }: Props) {
     if (!target) { toast('Select an item first.', 'info'); focusSearch(); return }
     if (target.displayInPOS === false) {
       toast('This product is not displayed in POS — it cannot be added to Stock BF.', 'error')
+      return
+    }
+    if (target.requireOpenStock !== true) {
+      toast('This product does not require open stock — it cannot be added to Stock BF.', 'error')
       return
     }
     const qn = parseStockBfQty(normalizeStockBfQtyInput(qty))
@@ -385,7 +393,7 @@ export function StockBfPage({ onBack }: Props) {
   return (
     <PosSubPageLayout
       title="Stock BF"
-      subtitle="Submit opening stock for today. Search lists only products displayed in POS."
+      subtitle="Submit opening stock for today. Search lists only POS products with Require Open Stock."
       onBack={onBack}
       badge={
         <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${online ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}`}>

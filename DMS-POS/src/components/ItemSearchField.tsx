@@ -27,9 +27,11 @@ export function formatSelectedItemSearchLabel(p: Pick<ProductRow, 'code' | 'name
 export function filterItemChoices(
   products: ProductRow[],
   search: string,
-  opts?: { posOnly?: boolean; limit?: number },
+  opts?: { posOnly?: boolean; requireOpenStockOnly?: boolean; limit?: number },
 ): ProductRow[] {
-  const catalog = opts?.posOnly ? products.filter((p) => p.displayInPOS !== false) : products
+  let catalog = products
+  if (opts?.posOnly) catalog = catalog.filter((p) => p.displayInPOS !== false)
+  if (opts?.requireOpenStockOnly) catalog = catalog.filter((p) => p.requireOpenStock === true)
   return filterByCodeOrName(catalog, search, {
     limit: opts?.limit ?? 20,
     whenEmpty: 'all',

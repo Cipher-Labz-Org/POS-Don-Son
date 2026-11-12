@@ -185,14 +185,14 @@ public class StockBFService : IStockBFService
 
         var flagged = await _context.Products
             .AsNoTracking()
-            .Where(p => ids.Contains(p.Id) && !p.DisplayInPOS)
+            .Where(p => ids.Contains(p.Id) && (!p.DisplayInPOS || !p.RequireOpenStock))
             .Select(p => p.Name)
             .ToListAsync(cancellationToken);
 
         if (flagged.Count > 0)
         {
             throw new InvalidOperationException(
-                "Stock BF is only allowed for products that are displayed in POS. " +
+                "Stock BF is only allowed for products that are displayed in POS and have Require Open Stock enabled. " +
                 $"Not allowed: {string.Join(", ", flagged)}");
         }
     }

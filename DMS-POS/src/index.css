@@ -173,7 +173,7 @@ html.pos-osk-open #root {
   background: #f3f4f6;
 }
 
-/* Always-visible horizontal bar (category chips) */
+/* Always-visible horizontal bar (category chips) — 150% of 26px track */
 .pos-scroll-x {
   overflow-x: auto;
   overflow-y: hidden;
@@ -181,7 +181,7 @@ html.pos-osk-open #root {
   scrollbar-color: var(--pos-scrollbar-thumb) var(--pos-scrollbar-track);
 }
 .pos-scroll-x::-webkit-scrollbar {
-  height: 20px;
+  height: calc(var(--pos-scrollbar-size) * 1.5);
 }
 .pos-scroll-x::-webkit-scrollbar-track {
   background: var(--pos-scrollbar-track);
@@ -210,6 +210,20 @@ html.pos-osk-open #root {
   font-size: 1.1875rem;
   line-height: 1.35;
   font-weight: 600;
+  white-space: normal !important;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
+  /* table-fixed: let this column shrink and wrap instead of ellipsis */
+  max-width: 0;
+}
+.pos-bill-panel .pos-bill-item-name {
+  display: block;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 .pos-bill-panel .pos-bill-amount,
 .pos-bill-panel .pos-bill-qty {
@@ -247,6 +261,32 @@ html.pos-osk-open #root {
   height: var(--pos-category-height);
   min-height: var(--pos-category-height);
   color: var(--neutral-900, #171717);
+}
+/* Expanded category grid: keep a few rows on screen, scroll the rest by touch */
+.pos-category-expand-scroll {
+  max-height: min(48vh, calc(var(--pos-category-height) * 4 + 0.625rem * 3));
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+.pos-category-strip {
+  container-type: inline-size;
+  touch-action: pan-x;
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+}
+.pos-category-strip-inner {
+  display: flex;
+  width: max-content;
+  gap: 0.625rem;
+}
+.pos-category-strip-inner .pos-category-btn {
+  flex: 0 0 auto;
+  min-width: 8.5rem;
+  width: calc((100cqi - 1.875rem) / 4);
 }
 
 /* ─── Product tile press feedback ─── */
