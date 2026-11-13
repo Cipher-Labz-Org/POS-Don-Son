@@ -23,6 +23,8 @@ public sealed class DnPrintAgentService : IDnPrintAgentService
         if (string.IsNullOrWhiteSpace(dto.StationCode))
             throw new InvalidOperationException("Station code is required.");
 
+        await _context.EnsurePrintAgentTablesAsync(cancellationToken);
+
         var code = dto.StationCode.Trim();
         var now = DateTime.UtcNow;
 
@@ -64,6 +66,7 @@ public sealed class DnPrintAgentService : IDnPrintAgentService
 
     public async Task<DnPrintPresenceDto> GetPresenceAsync(CancellationToken cancellationToken = default)
     {
+        await _context.EnsurePrintAgentTablesAsync(cancellationToken);
         var now = DateTime.UtcNow;
         var agents = await _context.DnPrintAgents
             .AsNoTracking()
@@ -86,6 +89,7 @@ public sealed class DnPrintAgentService : IDnPrintAgentService
 
     public async Task QueueCommandAsync(RemoteClientCommand command, CancellationToken cancellationToken = default)
     {
+        await _context.EnsurePrintAgentTablesAsync(cancellationToken);
         var agents = await _context.DnPrintAgents.Where(a => a.IsActive).ToListAsync(cancellationToken);
         var now = DateTime.UtcNow;
         foreach (var a in agents)

@@ -24,11 +24,11 @@ export const developerApi = {
     };
   },
 
-  checkDnPrint: () => apiClient.post('/api/developer/dn-print/check'),
-  restartDnPrint: () => apiClient.post('/api/developer/dn-print/restart'),
-  checkLabelPrint: () => apiClient.post('/api/developer/label-print/check'),
-  restartLabelPrint: () => apiClient.post('/api/developer/label-print/restart'),
-  refreshAllPos: () => apiClient.post('/api/developer/pos/refresh-all'),
+  checkDnPrint: () => apiClient.post('/api/developer/dn-print/check', {}),
+  restartDnPrint: () => apiClient.post('/api/developer/dn-print/restart', {}),
+  checkLabelPrint: () => apiClient.post('/api/developer/label-print/check', {}),
+  restartLabelPrint: () => apiClient.post('/api/developer/label-print/restart', {}),
+  refreshAllPos: () => apiClient.post('/api/developer/pos/refresh-all', {}),
   refreshPosStatus: async () => {
     const res = await apiClient.post<any>('/api/developer/pos/refresh-status');
     return normalizePos(unwrap(res));

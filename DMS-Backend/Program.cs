@@ -311,6 +311,9 @@ using (var scope = app.Services.CreateScope())
         // pos_device_agents — Super Admin header GET /api/pos-devices/status 500s if missing
         await context.EnsurePosDeviceAgentsTableAsync();
 
+        // dn_print_agents / label_print_agents — Developer Mode overview 500s if missing
+        await context.EnsurePrintAgentTablesAsync();
+
         // cancellations.delivery_no / delivered_date are optional (form no longer collects them)
         await context.EnsureCancellationDeliveryFieldsOptionalAsync();
 

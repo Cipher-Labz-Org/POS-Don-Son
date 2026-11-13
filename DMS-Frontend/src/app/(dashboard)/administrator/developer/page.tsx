@@ -20,6 +20,21 @@ import type { DnPrintPresence, PosDevicePresence, PosDeviceStatus } from '@/lib/
 import { formatSlDateTime } from '@/lib/sri-lanka-time';
 import { Modal, ModalFooter } from '@/components/ui/modal';
 
+function apiErrorMessage(error: unknown, fallback: string) {
+  const e = error as {
+    response?: { data?: { error?: { message?: string }; detail?: string; title?: string; message?: string } };
+    message?: string;
+  };
+  const data = e?.response?.data;
+  return (
+    data?.error?.message ||
+    data?.detail ||
+    data?.message ||
+    data?.title ||
+    fallback
+  );
+}
+
 function StatusPill({ online }: { online: boolean }) {
   return (
     <span
@@ -95,8 +110,8 @@ function DeveloperModeContent() {
       const data = await developerApi.getOverview();
       setOverview(data);
       setPos(data.posDevices);
-    } catch (e: any) {
-      toast.error(e.response?.data?.error?.message || 'Failed to load developer overview');
+    } catch (e: unknown) {
+      toast.error(apiErrorMessage(e, 'Failed to load developer overview'));
     } finally {
       setLoading(false);
     }
@@ -132,8 +147,8 @@ function DeveloperModeContent() {
       await fn();
       toast.success(ok);
       await load();
-    } catch (e: any) {
-      toast.error(e.response?.data?.error?.message || 'Command failed');
+    } catch (e: unknown) {
+      toast.error(apiErrorMessage(e, 'Command failed'));
     } finally {
       setBusy(false);
     }
